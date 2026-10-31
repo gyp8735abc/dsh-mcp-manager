@@ -119,13 +119,52 @@ npm whoami --registry=https://registry.npmjs.org   # 应该打印你的用户名
 - `access: public` 是**作用域包的强制要求**，否则会被当成私有包收费（返回 `402`）。
 - `registry` 让它即使在本机默认镜像的情况下也往官方源发。
 
+### 4.2b 关键一步：2FA 与 bypass token（0.2.0 发布时踩到的坑）
+
+这个账号的 npm 登录走的是**邮箱一次性验证码**，但 npm 发布要求的是真正的
+two-factor authentication。首次 `npm publish` 会返回：
+
+```
+E403 Two-factor authentication or granular access token with bypass 2fa enabled is required to publish packages.
+```
+
+两条出路，0.2.0 走的是第二条：
+
+| 方案 | 做法 | 适合 |
+|---|---|---|
+| A. 开 TOTP | 账号设置里启用 authenticator App，发布时 `npm publish --otp=<6位码>` | 人肉发布 |
+| B. bypass token（当前采用） | <https://www.npmjs.com/settings/gyp8735abc/tokens/granular-access-tokens/new> → 勾 **Bypass 2FA** → 权限 **Read and write (publish and stage)** → **All packages** | 本地脚本 + CI |
+
+**B 的 token 不要写进仓库。** 本仓库的约定是把 token 放进 `.npmrc.publish`（已在
+`.gitignore` 里），发布时用它顶掉用户级配置：
+
+```powershell
+# .npmrc.publish 内容：
+#   registry=https://registry.npmjs.org
+#   //registry.npmjs.org/:_authToken=npm_xxxx
+npm publish --ignore-scripts --userconfig .npmrc.publish --registry=https://registry.npmjs.org
+```
+
+两个必须知道的附加事实：
+
+1. **`--ignore-scripts` 是必要的（在受沙箱限制的终端里）。** `prepublishOnly`
+   会调用 `pack:check`，它内部再 spawn 一次 `npm`，在沙箱化的 shell 里会
+   `EPERM`。正常终端里可以去掉这个参数；去掉前先单独跑过 `npm run check` 和
+   `npm run pack:check`。
+2. **bypass token 正在退场。** npm 已在页面顶部提示：带 bypass 的直接发布能力
+   **2027 年 1 月**移除，账号变更类操作 2026 年 8 月起就受限。迁移方向是
+   **Trusted Publishing**（CI 用 OIDC 免 token）或给账号开 TOTP 后人工 `--otp`。
+   本仓库的 `.github/workflows/publish.yml` 目前用 `NPM_TOKEN` secret，届时换成
+   trusted publisher 即可。
+
 ### 4.3 发布
 
 ```powershell
-npm publish
+$env:npm_config_cache = "$PWD\.npm-cache-pack"   # 沙箱终端里把 cache 留在仓库内
+npm publish --ignore-scripts --userconfig .npmrc.publish --registry=https://registry.npmjs.org
 ```
 
-如果账号开了 2FA 且没有 bypass token，加一次性验证码：
+如果账号开了 TOTP 且没有 bypass token，改用一次性验证码：
 
 ```powershell
 npm publish --otp=123456
@@ -139,6 +178,9 @@ npm notice Tarball Contents
 ...
 + @gyp8735abc/dsh-mcp-manager@0.2.0
 ```
+
+> **npm 有"处理中"延迟。** 0.2.0 发布后约 3 分钟内，`npm view` / registry 读到的仍是
+> `404`。这不是失败——`+ @gyp8735abc/...` 出现就是已提交，等一会儿再查。别急着改版本号重发。
 
 ### 4.4 立即验证
 
@@ -186,7 +228,9 @@ $r.Content | ConvertFrom-Json | Select-Object projectPath, globalSource
 > 本仓库作者已用**打包出来的 tarball**（与 `npm publish` 上传内容一致）在独立
 > `DSH_HOME` 里跑过上述全流程：安装 → 组合 → 启动 → `inventory` 返回真实工作区数据 →
 > 页面预加载列表里出现 `@gyp8735abc/dsh-mcp-manager/client.js` → `POST set` 落盘到
-> `state.json`。
+> `state.json`。0.2.0 发布后又用**真实的 npm 安装**（`dsh plugin add @gyp8735abc/dsh-mcp-manager@0.2.0`）
+> 在全新的 `DSH_HOME` 里重复了一遍，结果一致——说明 peer 依赖
+> （`@deepseek-ai/dsh-mcp-client`）在干净环境里由 DSH 运行时表提供，不需要用户额外安装。
 
 ---
 
@@ -206,23 +250,30 @@ node scripts/build-market-index.mjs --from-registry `
 
 ### 5.1 打开 Pages
 
-GitHub 仓库 → **Settings → Pages**：
-
-- Source: **Deploy from a branch**
-- Branch: **main**，目录选 **/docs**
-- Save
-
-等半分钟，索引地址就是：
+仓库 `gyp8735abc/dsh-mcp-manager` 的 Pages **已经配置好**（source: `main` / `/docs`），
+索引地址就是：
 
 ```
 https://gyp8735abc.github.io/dsh-mcp-manager/index.json
 ```
 
+新仓库要从头配的话，两条路：
+
+- **界面**：Settings → Pages → Source: *Deploy from a branch* → Branch: `main`，目录 `/docs` → Save。
+- **API**（需要带 `repo` 权限的 token）：
+
+  ```powershell
+  $env:GH_TOKEN = "<你的 PAT>"
+  node -e "fetch('https://api.github.com/repos/gyp8735abc/dsh-mcp-manager/pages',{method:'POST',headers:{authorization:'Bearer '+process.env.GH_TOKEN,accept:'application/vnd.github+json','content-type':'application/json'},body:JSON.stringify({source:{branch:'main',path:'/docs'}})})"
+  ```
+
+改完 `docs/index.json` 后 `git push` 即可，Pages 会自动重建（约 20–60 秒）。
+
 ### 5.2 验证索引
 
 ```powershell
-(Invoke-WebRequest "https://gyp8735abc.github.io/dsh-mcp-manager/index.json").StatusCode  # 200
-(Invoke-WebRequest "https://gyp8735abc.github.io/dsh-mcp-manager/icon.svg").StatusCode      # 200
+# PowerShell 的 Invoke-WebRequest 在部分代理环境下会报 SSL 错，用 node 的 fetch 更稳
+node -e "(async()=>{const r=await fetch('https://gyp8735abc.github.io/dsh-mcp-manager/index.json');const j=await r.json();console.log(r.status, j.plugins[0].name, j.plugins[0].versions[0].version)})()"
 ```
 
 ### 5.3 索引长什么样（format 1 字段说明）
@@ -327,6 +378,8 @@ git add -A; git commit -m "release: v0.2.1"; git tag v0.2.1; git push --follow-t
 | 市场条目显示「不可安装」 | 该版本 `engines.dsh` 与运行版本不匹配 | 改 `engines.dsh` 并重发索引 |
 | 装完没有插头按钮 | 没重启 `dsh web` / 没强刷浏览器 / DSH 版本超出范围 | 重启 + `Ctrl+Shift+R`；`dsh --version` |
 | `dsh plugin add` 说找不到包 | 镜像站还没同步（新包一般几分钟到几十分钟） | 用官方源装：`dsh plugin --profile web add @gyp8735abc/dsh-mcp-manager --registry=https://registry.npmjs.org` |
+| 发布 3 分钟内 `npm view` 还是 404 | npm 发布流水线在处理中 | 等 1–3 分钟再查，不要改版本号重发 |
+| 推 `.github/` 下的 workflow 被拒 | PAT 缺 `workflow` 权限 | 重新生成 token 并勾上 `workflow` |
 
 ---
 
@@ -340,10 +393,28 @@ git add -A; git commit -m "release: v0.2.1"; git tag v0.2.1; git push --follow-t
 - [ ] `npm run check` 通过
 - [ ] `npm run pack:check` 通过，文件列表只有预期的那 13 个
 - [ ] 在一个干净的 `DSH_HOME` 里用本地 tarball 装过一遍，`--dump-config` 有该行
+- [ ] `.npmrc.publish` 存在且**没有**被 `git status` 看到（`.gitignore` 已覆盖）
 
 发布后：
 
-- [ ] `npm view <包名> version` 返回新版本
+- [ ] `npm view <包名> version` 返回新版本（记得等处理延迟）
 - [ ] `node scripts/build-market-index.mjs --from-registry --validator ...` 输出 `validated by`
 - [ ] `docs/index.json` 已提交并推送，Pages 地址返回 200
 - [ ] 在另一台机器（或另一个 `DSH_HOME`）按 README 的「方式一」从市场装一次，能看到按钮
+
+---
+
+## 10. 发布记录
+
+| 项 | 值 |
+|---|---|
+| npm 包 | `@gyp8735abc/dsh-mcp-manager@0.2.0`，发布于 2026-10-31T23:43:27Z |
+| 包体积 | 40.2 kB（tar）/ 126.8 kB（解包）· 13 个文件 |
+| GitHub | <https://github.com/gyp8735abc/dsh-mcp-manager> |
+| 市场索引 | <https://gyp8735abc.github.io/dsh-mcp-manager/index.json> |
+| 发布用 token | 本地 `.npmrc.publish`（bypass 2FA，有效期至 2027-01-30） |
+| 验证 | 全新 `DSH_HOME` 从 npm 安装 → 组合成功 → `/api/dsh-mcp-manager/inventory` 返回 200 → 页面加载 `client.js` |
+
+> token 到期（2027-01-30）或 npm 于 2027-01 移除 bypass 直接发布后，按 §4.2b 换成
+> TOTP + `--otp` 或 Trusted Publishing。
+

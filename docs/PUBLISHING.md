@@ -135,15 +135,20 @@ E403 Two-factor authentication or granular access token with bypass 2fa enabled 
 | A. 开 TOTP | 账号设置里启用 authenticator App，发布时 `npm publish --otp=<6位码>` | 人肉发布 |
 | B. bypass token（当前采用） | <https://www.npmjs.com/settings/gyp8735abc/tokens/granular-access-tokens/new> → 勾 **Bypass 2FA** → 权限 **Read and write (publish and stage)** → **All packages** | 本地脚本 + CI |
 
-**B 的 token 不要写进仓库。** 本仓库的约定是把 token 放进 `.npmrc.publish`（已在
-`.gitignore` 里），发布时用它顶掉用户级配置：
+**B 的 token 不要写进仓库。** 本机约定：两枚凭据（npm 发布 + GitHub PAT）统一放在
+`D:\ai-workspace\.secrets\env.ps1`（该目录已被 `.gitignore` 排除），仓库里的
+`.npmrc.publish` 只引用变量、不含明文：
 
 ```powershell
+. D:\ai-workspace\.secrets\env.ps1        # 载入 NPM_TOKEN / GH_TOKEN
 # .npmrc.publish 内容：
 #   registry=https://registry.npmjs.org
-#   //registry.npmjs.org/:_authToken=npm_xxxx
-npm publish --ignore-scripts --userconfig .npmrc.publish --registry=https://registry.npmjs.org
+#   //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+npm publish --ignore-scripts --userconfig .npmrc.publish --registry=$env:NPM_REGISTRY
 ```
+
+凭据的权限、到期时间、轮换方式见 [`.secrets/README.md`](../../.secrets/README.md)
+（相对 `D:\ai-workspace`）。
 
 两个必须知道的附加事实：
 
@@ -412,7 +417,7 @@ git add -A; git commit -m "release: v0.2.1"; git tag v0.2.1; git push --follow-t
 | 包体积 | 40.2 kB（tar）/ 126.8 kB（解包）· 13 个文件 |
 | GitHub | <https://github.com/gyp8735abc/dsh-mcp-manager> |
 | 市场索引 | <https://gyp8735abc.github.io/dsh-mcp-manager/index.json> |
-| 发布用 token | 本地 `.npmrc.publish`（bypass 2FA，有效期至 2027-01-30） |
+| 发布用 token | `D:\ai-workspace\.secrets\env.ps1`（npm bypass 2FA，至 2027-01-30；GitHub PAT，至 2026-12-01） |
 | 验证 | 全新 `DSH_HOME` 从 npm 安装 → 组合成功 → `/api/dsh-mcp-manager/inventory` 返回 200 → 页面加载 `client.js` |
 
 > token 到期（2027-01-30）或 npm 于 2027-01 移除 bypass 直接发布后，按 §4.2b 换成

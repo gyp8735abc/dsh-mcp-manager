@@ -423,3 +423,109 @@ git add -A; git commit -m "release: v0.2.1"; git tag v0.2.1; git push --follow-t
 > token 到期（2027-01-30）或 npm 于 2027-01 移除 bypass 直接发布后，按 §4.2b 换成
 > TOTP + `--otp` 或 Trusted Publishing。
 
+---
+
+## 11. 怎么让别人搜到（插件市场的真实规则）
+
+### 11.1 先纠正一个误解：DSH 没有"应用商店"
+
+DSH 的「插件市场」是一个**索引读取器**，不是商店：
+
+- 用户侧：插件 → **发现** → **添加索引源**，填一个 `index.json` 的 URL；
+  DSH 拉取、校验、建全文索引，然后在这个索引里搜索。
+- 没有人能"提交到官方商店"，因为**不存在**这样一个服务——DeepSeek 只内置了少量官方
+  bundle 的按需目录（写在 `dsh-plugin-package-inventory-deepseek` 这类包里），不接受投稿。
+- 「发现」标签本身来自可选实验性 bundle `@deepseek-ai/dsh-experimental-plugin-market-bundle`，
+  所以全新安装的用户要先在 **插件 → 实验性插件 → 自定义插件市场** 打开它。
+
+所以"让别人搜到"= 让**别人的索引源里有你的条目**。共三条路：
+
+| 路径 | 索引 URL | 谁维护 | 你要做什么 |
+|---|---|---|---|
+| ① 自己的索引 | `https://gyp8735abc.github.io/dsh-mcp-manager/index.json` | 你 | 已上线，把 URL 写进 README / npm 页 / 文章 |
+| ② 自动聚合索引 | 见 [REALOIYO/dsh-plugin-market](https://github.com/REALOIYO/dsh-plugin-market) 的 README | 社区，每 6 小时重建 | **不用做**，满足条件后自动被收录 |
+| ③ Awesome 目录索引 | `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json` | [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) | 提一个 PR（一天后） |
+
+①②③ 都只是索引，用户加了哪个就能搜到哪个；③ 因为放在 npm + jsDelivr 上（15 秒超时内
+能拉到），是最多人会加的一个，也是第三方市场 App [dsh-market](https://github.com/dsh-market/dsh-market)
+的数据源。
+
+### 11.2 ② 自动聚合：已经满足条件
+
+那个索引的收录规则（原文见其 README）：从 npm 用 `keywords:dsh-plugin` 搜索，
+**只保留 `package.json` 里声明了 `dsh.bundle` 的包**。
+
+本插件的现状：
+
+- `keywords` 含 `dsh-plugin` ✅
+- `package.json` 声明了 `dsh.bundle.patch` ✅
+
+所以下一轮（≤6 小时）会自动出现在那个索引里，无需任何操作。
+
+### 11.3 ③ Awesome 目录：还差一个 PR（等一天）
+
+收录硬性条件与本仓库现状：
+
+| 条件 | 状态 |
+|---|---|
+| `package.json` 声明 `dsh.bundle` | ✅ |
+| 仓库有 `dsh-plugin` topic | ✅ 已加（`dsh, dsh-plugin, deepseek-harness, mcp, plugin, cordis, skills, workspace`） |
+| 仓库创建满 1 天 | ⏳ 2026-11-02 之后可提 |
+| PR 增加 `data/plugins/<owner>__<repo>.yml` | ✅ 文件已备好 |
+
+投稿文件（仓库里已备好，直接拷进 fork）：
+`contrib/awesome-dsh-plugin/gyp8735abc__dsh-mcp-manager.yml`
+
+```yaml
+url: https://github.com/gyp8735abc/dsh-mcp-manager
+name: gyp8735abc/dsh-mcp-manager
+category: tools
+description:
+  en: 'Per-workspace MCP and skill switches: each workspace row opens a popup that enables or disables global MCP, project MCP and skills for that workspace only.'
+  zh: '按工作区管理 MCP 与技能：点工作区行上的按钮，就能只对这个工作区启用或停用全局 MCP、项目 MCP 与技能。'
+```
+
+注意：**`description.en` 里出现 `": "` 必须加引号**，否则 YAML 会解析失败（上面已经加了）。
+`category` 只能取他们的固定集合，本次选 `tools`。
+
+提交流程（2026-11-02 之后）：
+
+```powershell
+. D:\ai-workspace\.secrets\env.ps1
+
+# 1. Fork
+node -e "fetch('https://api.github.com/repos/awesome-dsh-plugin/awesome-dsh-plugin/forks',{method:'POST',headers:{authorization:'Bearer '+process.env.GH_TOKEN,'user-agent':'local','content-type':'application/json'},body:'{}'}).then(r=>console.log(r.status))"
+
+# 2. clone fork → 放文件 → commit → push（仓库要新建分支，PR 从一个分支来）
+git clone https://github.com/gyp8735abc/awesome-dsh-plugin.git
+cd awesome-dsh-plugin
+git checkout -b add/dsh-mcp-manager
+Copy-Item "D:\ai-workspace\dsh-mcp-manager-port\contrib\awesome-dsh-plugin\gyp8735abc__dsh-mcp-manager.yml" "data\plugins\gyp8735abc__dsh-mcp-manager.yml"
+git add data/plugins/gyp8735abc__dsh-mcp-manager.yml
+git commit -m "Add gyp8735abc/dsh-mcp-manager"
+git -c credential.helper= push "https://gyp8735abc:$($env:GH_TOKEN)@github.com/gyp8735abc/awesome-dsh-plugin.git" add/dsh-mcp-manager
+
+# 3. 开 PR
+node -e "fetch('https://api.github.com/repos/awesome-dsh-plugin/awesome-dsh-plugin/pulls',{method:'POST',headers:{authorization:'Bearer '+process.env.GH_TOKEN,'user-agent':'local','content-type':'application/json'},body:JSON.stringify({title:'Add gyp8735abc/dsh-mcp-manager',head:'gyp8735abc:add/dsh-mcp-manager',base:'main',body:'Adds a per-workspace MCP and skill manager for dsh.'})}).then(async r=>console.log(r.status, await r.text()))"
+```
+
+### 11.4 索引里的哪些字段会影响"搜得到"
+
+DSH 的搜索匹配（`pluginMarket.search`）覆盖：**包名、author、keywords、
+以及 `title` / `description` / 分类名 / 标签名的所有语言**。规则是前缀匹配，
+4 个字符以上允许 1/5 长度的编辑距离；中日韩文本按**相邻二字组合**切分，
+所以中文不写空格也能搜到。
+
+因此索引里这些字段都值得写全（本仓库 `scripts/build-market-index.mjs` 已自动生成）：
+标题双语、描述双语、`keywords` 继承自 `package.json`、分类 `mcp`、标签 `按工作区`。
+
+本插件实测命中词：`mcp`、`工作区`、`技能`、`gyp8735abc`、`manager`。
+
+### 11.5 实测证据
+
+在一个只装了「自定义插件市场」bundle 的干净 `DSH_HOME` 里：添加
+`https://gyp8735abc.github.io/dsh-mcp-manager/index.json` 后，「发现」页立即出现
+分类（全部 / 工作区 / 技能 / MCP）和条目卡片（图标、标题、标签、描述、`0.2.0 · gyp8735abc · 2026年11月1日`、安装按钮）；
+在搜索框输入 `mcp 工作区` 仍能命中该条目。
+
+

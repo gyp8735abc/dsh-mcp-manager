@@ -1,0 +1,6 @@
+url: https://github.com/gyp8735abc/dsh-mcp-manager
+name: gyp8735abc/dsh-mcp-manager
+category: tools
+description:
+  en: 'Per-workspace MCP and skill switches: each workspace row opens a popup that enables or disables global MCP, project MCP and skills for that workspace only.'
+  zh: '按工作区管理 MCP 与技能：点工作区行上的按钮，就能只对这个工作区启用或停用全局 MCP、项目 MCP 与技能。'

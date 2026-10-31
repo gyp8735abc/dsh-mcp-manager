@@ -54,19 +54,27 @@ This plugin moves the switches down to the **workspace** layer:
 
 ## Install
 
-### Option 1: plugin market (two steps)
+### Option 1: plugin market (three steps)
 
-1. Open **Plugins → Discover → Add index source** and enter:
+1. Turn the tab on first: **Plugins → Experimental plugins → enable “Custom plugin markets”**.
+   (It is an optional experimental bundle; the **Discover** tab only exists once it is installed.
+   You do this once.)
+2. **Discover → Add index source**, and enter:
 
    ```
    https://gyp8735abc.github.io/dsh-mcp-manager/index.json
    ```
 
-2. Search for `MCP manager`, open the entry, press **Install**.
+3. Search for `MCP manager`, `mcp`, `workspace` or `gyp8735abc`, open the entry, press **Install**.
 
 > Market indexes are unsigned; titles, authors and sources are publisher claims. Only add
 > index sources you trust, and check in the confirmation dialog that the source is
 > `@gyp8735abc/dsh-mcp-manager`.
+>
+> A "plugin market" is not an app store: DSH has no central store, the market only reads the
+> index URLs **you** add. Besides the index above you can add the community index this plugin
+> is submitted to — `https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/index.json`
+> (the Awesome DSH Plugin catalog) — and search there.
 
 ### Option 2: one command
 

@@ -1,0 +1,31 @@
+name: publish
+
+# Publishing happens on a tag push: `git tag v0.2.1 && git push origin v0.2.1`.
+# Set the repository secret NPM_TOKEN to a granular npm access token that can
+# publish @gyp8735abc/* and has 2FA bypass for automation.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Check the sources parse
+        run: npm run check
+      - name: Verify the package contents
+        run: node scripts/verify-pack.mjs
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

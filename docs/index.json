@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "title": {
+    "en": "DeepSeek Harness plugins by gyp8735abc",
+    "zh": "gyp8735abc 的 DeepSeek Harness 插件"
+  },
+  "description": {
+    "en": "Bundles published from github.com/gyp8735abc",
+    "zh": "由 github.com/gyp8735abc 发布的插件"
+  },
+  "metadata": {
+    "categories": {
+      "mcp": {
+        "title": {
+          "en": "MCP",
+          "zh": "MCP"
+        }
+      },
+      "skills": {
+        "title": {
+          "en": "Skills",
+          "zh": "技能"
+        }
+      },
+      "workspace": {
+        "title": {
+          "en": "Workspaces",
+          "zh": "工作区"
+        }
+      }
+    },
+    "labels": {
+      "per-workspace": {
+        "title": {
+          "en": "Per workspace",
+          "zh": "按工作区"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "@gyp8735abc/dsh-mcp-manager",
+      "title": {
+        "en": "MCP manager (per workspace)",
+        "zh": "MCP 管理器（按工作区）"
+      },
+      "description": {
+        "en": "Enable or disable global MCP, project MCP and skills separately for each workspace, from one popup on the workspace row",
+        "zh": "在每个工作区行用一个弹窗，按工作区独立启用/停用全局 MCP、项目 MCP 与技能"
+      },
+      "icon": "./icon.svg",
+      "author": "gyp8735abc",
+      "homepage": "https://github.com/gyp8735abc/dsh-mcp-manager#readme",
+      "repository": {
+        "url": "https://github.com/gyp8735abc/dsh-mcp-manager"
+      },
+      "metadata": {
+        "category": "mcp",
+        "keywords": [
+          "dsh",
+          "dsh-plugin",
+          "deepseek-harness",
+          "cordis",
+          "mcp",
+          "model-context-protocol",
+          "skills",
+          "workspace"
+        ],
+        "labels": [
+          "per-workspace"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.2.0",
+          "publishTimestamp": 1793489253,
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.0-rc.2 <0.3.0"
+          }
+        }
+      ]
+    }
+  ]
+}

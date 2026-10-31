@@ -1,0 +1,11 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>dsh-mcp-manager</title>
+  <rect x="0.75" y="0.75" width="34.5" height="34.5" rx="9.25" fill="#4D6BFE" fill-opacity="0.10"/>
+  <rect x="0.75" y="0.75" width="34.5" height="34.5" rx="9.25" stroke="#4D6BFE" stroke-opacity="0.30" stroke-width="1.5"/>
+  <path d="M25.5 3H11.5A8.5 8.5 0 0 0 3 11.5V24.5A8.5 8.5 0 0 0 11.5 33H25.5"
+        stroke="#4D6BFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="9.5" y="13" width="11" height="10" rx="2.5" fill="#4D6BFE"/>
+  <rect x="20.5" y="15.25" width="3.25" height="1.9" rx="0.95" fill="#4D6BFE"/>
+  <rect x="20.5" y="18.85" width="3.25" height="1.9" rx="0.95" fill="#4D6BFE"/>
+  <path d="M23.75 18H32" stroke="#4D6BFE" stroke-width="2.25" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "MCP manager (per workspace)",
+    "description": "Enable or disable global MCP, project MCP and skills separately for each workspace, from one popup on the workspace row"
+  }
+}

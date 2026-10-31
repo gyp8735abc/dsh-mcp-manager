@@ -1,0 +1,5 @@
+# dsh-mcp-manager bundle patch: mount the MCP manager plugin (host half).
+# The name must be the full package name, like every shipped bundle patch.
+- insert:
+    - id: dsh-mcp-manager
+      name: "@gyp8735abc/dsh-mcp-manager"

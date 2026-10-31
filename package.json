@@ -1,0 +1,81 @@
+{
+  "name": "@gyp8735abc/dsh-mcp-manager",
+  "version": "0.2.0",
+  "description": "Per-workspace MCP and skill switches for DeepSeek Harness: one popup per workspace row to enable or disable global MCP, project MCP and skills independently, with live mounting.",
+  "icon": "./icon.svg",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./client/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./icon": "./icon.svg",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "mcp",
+    "model-context-protocol",
+    "skills",
+    "workspace"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gyp8735abc/dsh-mcp-manager.git"
+  },
+  "homepage": "https://github.com/gyp8735abc/dsh-mcp-manager#readme",
+  "bugs": {
+    "url": "https://github.com/gyp8735abc/dsh-mcp-manager/issues"
+  },
+  "author": "gyp8735abc",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "engines": {
+    "dsh": ">=0.2.0-rc.2 <0.3.0",
+    "node": ">=22"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-mcp-client": ">=0.2.0-rc.2 <0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-mcp-client": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-primitives"
+      ]
+    }
+  },
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/skill-filter.js && node --check lib/skill-roots.js && node --check client/client.js",
+    "pack:check": "node scripts/verify-pack.mjs",
+    "market:index": "node scripts/build-market-index.mjs",
+    "prepublishOnly": "npm run check && npm run pack:check"
+  }
+}

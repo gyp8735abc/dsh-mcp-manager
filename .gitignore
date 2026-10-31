@@ -1,0 +1,12 @@
+# dependencies / build output
+node_modules/
+.npm-cache-pack/
+.npm-cache/
+
+# local secrets and scratch — never commit these
+.npmrc.publish
+.npmrc
+.pack.json
+*.log
+.DS_Store
+Thumbs.db
